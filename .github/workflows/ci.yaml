@@ -11,34 +11,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  source:
-    name: Source
-    runs-on: ubuntu-latest
-    env:
-      BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          submodules: true
-      - name: Gen Source
-        run: |
-          REV_ID=$(git tag --points-at HEAD)
-          if [ -z "${REV_ID}" ]; then
-            REV_ID=$(git rev-parse --short HEAD)
-          fi
-          mkdir -p rtspunch-${{ env.BRANCH_NAME }}
-          git ls-files --recurse-submodules | tar c -O -T- | tar x -C rtspunch-${{ env.BRANCH_NAME }}
-          echo ${REV_ID} > rtspunch-${{ env.BRANCH_NAME }}/.version
-          tar cJf rtspunch-${{ env.BRANCH_NAME }}.tar.xz rtspunch-${{ env.BRANCH_NAME }}
-      - name: Upload source
-        uses: actions/upload-artifact@v4
-        with:
-          name: rtspunch-${{ env.BRANCH_NAME }}.tar.xz
-          path: rtspunch-${{ env.BRANCH_NAME }}.tar.xz
-          if-no-files-found: error
-          retention-days: 1
+  # source:
+  #   name: Source
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 1
+  #         submodules: true
+  #     - name: Gen Source
+  #       run: |
+  #         REV_ID=$(git tag --points-at HEAD)
+  #         if [ -z "${REV_ID}" ]; then
+  #           REV_ID=$(git rev-parse --short HEAD)
+  #         fi
+  #         mkdir -p rtspunch-${{ env.BRANCH_NAME }}
+  #         git ls-files --recurse-submodules | tar c -O -T- | tar x -C rtspunch-${{ env.BRANCH_NAME }}
+  #         echo ${REV_ID} > rtspunch-${{ env.BRANCH_NAME }}/.version
+  #         tar cJf rtspunch-${{ env.BRANCH_NAME }}.tar.xz rtspunch-${{ env.BRANCH_NAME }}
+  #     - name: Upload source
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: rtspunch-${{ env.BRANCH_NAME }}.tar.xz
+  #         path: rtspunch-${{ env.BRANCH_NAME }}.tar.xz
+  #         if-no-files-found: error
+  #         retention-days: 1
 
   linux:
     name: Linux
@@ -128,7 +128,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     needs:
-      - source
+      # - source
       - linux
     if: github.event_name == 'release'
     steps:
