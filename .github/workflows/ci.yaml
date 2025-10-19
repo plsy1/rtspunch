@@ -28,15 +28,15 @@ jobs:
           if [ -z "${REV_ID}" ]; then
             REV_ID=$(git rev-parse --short HEAD)
           fi
-          mkdir -p rtsproxy-${{ env.BRANCH_NAME }}
-          git ls-files --recurse-submodules | tar c -O -T- | tar x -C rtsproxy-${{ env.BRANCH_NAME }}
-          echo ${REV_ID} > rtsproxy-${{ env.BRANCH_NAME }}/.version
-          tar cJf rtsproxy-${{ env.BRANCH_NAME }}.tar.xz rtsproxy-${{ env.BRANCH_NAME }}
+          mkdir -p rtspunch-${{ env.BRANCH_NAME }}
+          git ls-files --recurse-submodules | tar c -O -T- | tar x -C rtspunch-${{ env.BRANCH_NAME }}
+          echo ${REV_ID} > rtspunch-${{ env.BRANCH_NAME }}/.version
+          tar cJf rtspunch-${{ env.BRANCH_NAME }}.tar.xz rtspunch-${{ env.BRANCH_NAME }}
       - name: Upload source
         uses: actions/upload-artifact@v4
         with:
-          name: rtsproxy-${{ env.BRANCH_NAME }}.tar.xz
-          path: rtsproxy-${{ env.BRANCH_NAME }}.tar.xz
+          name: rtspunch-${{ env.BRANCH_NAME }}.tar.xz
+          path: rtspunch-${{ env.BRANCH_NAME }}.tar.xz
           if-no-files-found: error
           retention-days: 1
 
@@ -115,12 +115,12 @@ jobs:
           rm -rf builddir
           meson setup builddir
           meson compile -C builddir -j$(nproc)
-          cp builddir/rtsproxy rtsproxy-linux-${{ matrix.name }}
+          cp builddir/rtspunch rtspunch-linux-${{ matrix.name }}
       - name: Upload ${{ matrix.name }}
         uses: actions/upload-artifact@v4
         with:
-          name: rtsproxy-linux-${{ matrix.name }}
-          path: rtsproxy-linux-${{ matrix.name }}
+          name: rtspunch-linux-${{ matrix.name }}
+          path: rtspunch-linux-${{ matrix.name }}
           if-no-files-found: error
           retention-days: 1
 
@@ -140,12 +140,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release
-          pattern: "rtsproxy-*"
+          pattern: "rtspunch-*"
           merge-multiple: true
       - name: Upload release assets
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          for i in release/rtsproxy-*; do
+          for i in release/rtspunch-*; do
             gh release upload ${{ github.event.release.tag_name }} $i
           done
