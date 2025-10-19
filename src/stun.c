@@ -80,7 +80,6 @@ int stun_get_mapping(int s, char *out_pub_ip, int *out_pub_port)
         if (n < 20)
             continue;
 
-        uint16_t msg_type = ntohs(*(uint16_t *)(rsp + 0));
         uint16_t msg_len = ntohs(*(uint16_t *)(rsp + 2));
         uint32_t cookie = ntohl(*(uint32_t *)(rsp + 4));
         if (cookie != STUN_MAGIC_COOKIE)

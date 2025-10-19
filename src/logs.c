@@ -2,7 +2,6 @@
 #include <time.h>
 #include "logs.h"
 
-
 void log_print(const char *level, const char *fmt, ...)
 {
     time_t t = time(NULL);
