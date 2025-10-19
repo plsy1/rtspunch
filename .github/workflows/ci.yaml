@@ -131,6 +131,8 @@ jobs:
       - source
       - linux
     if: github.event_name == 'release'
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -143,8 +145,6 @@ jobs:
           pattern: "rtspunch-*"
           merge-multiple: true
       - name: Upload release assets
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for i in release/rtspunch-*; do
             gh release upload ${{ github.event.release.tag_name }} $i
