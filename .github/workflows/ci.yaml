@@ -1,0 +1,151 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  source:
+    name: Source
+    runs-on: ubuntu-latest
+    env:
+      BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: true
+      - name: Gen Source
+        run: |
+          REV_ID=$(git tag --points-at HEAD)
+          if [ -z "${REV_ID}" ]; then
+            REV_ID=$(git rev-parse --short HEAD)
+          fi
+          mkdir -p rtsproxy-${{ env.BRANCH_NAME }}
+          git ls-files --recurse-submodules | tar c -O -T- | tar x -C rtsproxy-${{ env.BRANCH_NAME }}
+          echo ${REV_ID} > rtsproxy-${{ env.BRANCH_NAME }}/.version
+          tar cJf rtsproxy-${{ env.BRANCH_NAME }}.tar.xz rtsproxy-${{ env.BRANCH_NAME }}
+      - name: Upload source
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtsproxy-${{ env.BRANCH_NAME }}.tar.xz
+          path: rtsproxy-${{ env.BRANCH_NAME }}.tar.xz
+          if-no-files-found: error
+          retention-days: 1
+
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: arm64
+            tool: aarch64-unknown-linux-musl
+          - name: arm32
+            tool: arm-unknown-linux-musleabi
+          - name: arm32hf
+            tool: arm-unknown-linux-musleabihf
+          - name: arm32v7
+            tool: armv7-unknown-linux-musleabi
+          - name: arm32v7hf
+            tool: armv7-unknown-linux-musleabihf
+          - name: i586
+            tool: i586-unknown-linux-musl
+          - name: i686
+            tool: i686-unknown-linux-musl
+          - name: loong64
+            tool: loongarch64-unknown-linux-musl
+          - name: m68k
+            tool: m68k-unknown-linux-musl
+          - name: microblazeel
+            tool: microblazeel-xilinx-linux-musl
+          - name: microblaze
+            tool: microblaze-xilinx-linux-musl
+          - name: mips64el
+            tool: mips64el-unknown-linux-musl
+          - name: mips64
+            tool: mips64-unknown-linux-musl
+          - name: mips32el
+            tool: mipsel-unknown-linux-musl
+          - name: mips32elsf
+            tool: mipsel-unknown-linux-muslsf
+          - name: mips32
+            tool: mips-unknown-linux-musl
+          - name: mips32sf
+            tool: mips-unknown-linux-muslsf
+          - name: or1k
+            tool: or1k-unknown-linux-musl
+          - name: powerpc64le
+            tool: powerpc64le-unknown-linux-musl
+          - name: powerpc64
+            tool: powerpc64-unknown-linux-musl
+          - name: powerpcle
+            tool: powerpcle-unknown-linux-musl
+          - name: powerpc
+            tool: powerpc-unknown-linux-musl
+          - name: riscv32
+            tool: riscv32-unknown-linux-musl
+          - name: riscv64
+            tool: riscv64-unknown-linux-musl
+          - name: s390x
+            tool: s390x-ibm-linux-musl
+          - name: sh4
+            tool: sh4-multilib-linux-musl
+          - name: x86_64
+            tool: x86_64-unknown-linux-musl
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: true
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build meson
+      - name: Build ${{ matrix.name }}
+        run: |
+          rm -rf builddir
+          meson setup builddir
+          meson compile -C builddir -j$(nproc)
+          cp builddir/rtsproxy rtsproxy-linux-${{ matrix.name }}
+      - name: Upload ${{ matrix.name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtsproxy-linux-${{ matrix.name }}
+          path: rtsproxy-linux-${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs:
+      - source
+      - linux
+    if: github.event_name == 'release'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release
+          pattern: "rtsproxy-*"
+          merge-multiple: true
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          for i in release/rtsproxy-*; do
+            gh release upload ${{ github.event.release.tag_name }} $i
+          done
