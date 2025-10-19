@@ -1,4 +1,4 @@
-# rtsproxy
+# rtspunch
 
 ## 命令行参数
 
@@ -16,4 +16,4 @@
 ### 参数示例
 
 ```bash
-./rtsproxy -p 8080 -n --set-rtp-buffer-size 16384 --set-max-udp-packet-size 1500
+./rtspunch -p 8080 -n --set-rtp-buffer-size 16384 --set-max-udp-packet-size 1500
