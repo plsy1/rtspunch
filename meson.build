@@ -1,4 +1,4 @@
-project('rtsproxy', 'c',
+project('rtspunch', 'c',
   version: '0.1',
   default_options: [
     'warning_level=0',
@@ -21,7 +21,7 @@ if host_machine.system() != 'darwin'
   ldflags += ['-static']
 endif
 
-exe = executable('rtsproxy', src,
+exe = executable('rtspunch', src,
     install: true,
     install_dir: 'bin',
     cpp_args: ['-g', '-O0', '-Wall'],
